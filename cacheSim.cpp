@@ -23,9 +23,20 @@ vector<int> tags;
 float hitRatio;
 float missRatio;
 float AMAT; // Average Memory Access Time 
+float SMAT; // Sum Memory Access Time 
+int hits;
+int misses;
 
 // Main structures 
-vector<vector<int>> cache;
+// Cache -- declared later in code 
+
+struct cacheLine{
+    int index; 
+    bool VB = false; // false is not valid and true is valid 
+    int tag = -1; // initialized to -1 to indicate unused cache line
+    int data; // might not be used 
+};
+
 vector<string> memAdds; // Memory addresses in bytes -- the size of this vector represents the number of accesses
 
 // Reads memory addresses (accesses) from a sequence file into 
@@ -55,17 +66,37 @@ void readFile(string filePath){
 void cacheSim(){
     // Calculated values 
     int dispBits = log2(L);
-    int cacheLines = S / L;
+    int cacheLines = S / L; // C 
     int indexBits = log2(cacheLines);
     int tagBits = memoryBits - dispBits - indexBits;
 
+    vector<cacheLine> cache(cacheLines);
+
     string disp, index, tag;
+
+    int dispI, indexI, tagI;
 
     // Loop over each memory address (access)
     for(int i = 0; i < memAdds.size(); i++){
             disp = memAdds[i].substr(0, dispBits);
             index = memAdds[i].substr(dispBits, dispBits + indexBits);
             tag = memAdds[i].substr(dispBits + indexBits, dispBits + indexBits + tagBits);
+
+            dispI = stoi(disp);
+            indexI = stoi(index);
+            tagI = stoi(tag);
+
+            for(int j = 0; j < cacheLines; j++){
+                if(cache[i].index == indexI && cache[i].tag == tagI && cache[i].VB){
+                    // It's a hit
+                    hits++;
+                    SMAT += cacheAT; 
+                }
+                else{
+                    misses++;
+                    SMAT += memAT;
+                }
+            }
 
 
     }

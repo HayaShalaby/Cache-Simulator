@@ -11,26 +11,26 @@ using namespace std;
 // Cache Line Structure
 struct CacheLine {
     bool VB = false; // Valid bit
-    int tag = -1;    // Cache tag
+    int tag = -1; // Cache tag
 };
 
 // Memory Inputs
-int memoryBits;  // Memory address bits
-int memAT;       // Memory access time
+int memoryBits; // Memory address bits
+int memAT; // Memory access time
 
 // Cache Inputs
-int numLevels;                // Number of cache levels
-vector<int> cacheSizes;       // Cache sizes for each level
-vector<int> cacheLineSizes;   // Cache line sizes for each level
-vector<int> cacheATs;         // Cache access times for each level
+int numLevels; // Number of cache levels
+vector<int> cacheSizes; // Cache sizes for each level
+vector<int> cacheLineSizes; // Cache line sizes for each level
+vector<int> cacheATs; // Cache access times for each level
 
-// Simulation Metrics
-vector<int> hits, misses;     // Hits and misses per cache level
-vector<float> hitRatios, missRatios, AMATs; // Metrics per cache level
 
-// Address Sequences
+vector<int> hits, misses; // Hits and misses per cache level
+vector<float> hitRatios, missRatios, AMATs; // Hit ratios, miss ratios, and average memory access time per cache level
+
+
 vector<int> instructionMemAdds; // Instruction memory addresses
-vector<int> dataMemAdds;        // Data memory addresses
+vector<int> dataMemAdds; // Data memory addresses
 
 // Function to read memory addresses from a file
 void readFile(const string& filePath, vector<int>& memAdds) {
@@ -43,7 +43,7 @@ void readFile(const string& filePath, vector<int>& memAdds) {
     while (getline(inputFile, line)) {
         stringstream ss(line);
         while (getline(ss, address, ',')) {
-            memAdds.push_back(stoi(address));  // Store memory accesses
+            memAdds.push_back(stoi(address)); // Store memory accesses
         }
     }
     inputFile.close();
@@ -51,7 +51,8 @@ void readFile(const string& filePath, vector<int>& memAdds) {
 
 // Cache Simulation Function
 void cacheSim() {
-    // Initialize vectors for metrics
+    
+    // Initializing our values
     hits.assign(numLevels, 0);
     misses.assign(numLevels, 0);
     hitRatios.assign(numLevels, 0);
@@ -65,7 +66,7 @@ void cacheSim() {
         caches[i] = vector<CacheLine>(numLines);
     }
 
-    // Output column headers for tracing
+    // Output for tracing
     cout << left << setw(8) << "Access"
          << setw(12) << "Address"
          << setw(8) << "Index"
@@ -77,9 +78,9 @@ void cacheSim() {
          << setw(12) << "Type" << endl;
 
     // Process instruction and data accesses
-    for (int pass = 0; pass < 2; pass++) {
-        const vector<int>& memAdds = (pass == 0) ? instructionMemAdds : dataMemAdds;
-        string accessType = (pass == 0) ? "Instruction" : "Data";
+    for (int j = 0; j < 2; j++) {
+        const vector<int>& memAdds = (j == 0) ? instructionMemAdds : dataMemAdds;
+        string accessType = (j == 0) ? "Instruction" : "Data";
 
         for (size_t i = 0; i < memAdds.size(); i++) {
             int address = memAdds[i];
@@ -121,7 +122,7 @@ void cacheSim() {
         }
     }
 
-    // Calculate metrics
+    // Calculations
     for (int level = 0; level < numLevels; level++) {
         int totalAccesses = instructionMemAdds.size() + dataMemAdds.size();
         hitRatios[level] = static_cast<float>(hits[level]) / totalAccesses;
@@ -129,7 +130,7 @@ void cacheSim() {
         AMATs[level] = cacheATs[level] + missRatios[level] * memAT;
     }
 
-    // Print summary results
+    // Print results
     cout << "\nCache Simulation Results:\n";
     cout << left << setw(8) << "Level"
          << setw(10) << "Hits"

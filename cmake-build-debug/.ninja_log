@@ -1,0 +1,15 @@
+# ninja log v5
+1	513	7552957865599884	CMakeFiles/Cache_Simulator.dir/cacheSim.cpp.obj	4e91a066a03f2f1f
+23	640	7552957866914418	CMakeFiles/Cache_Simulator.dir/Project2Assembly.cpp.obj	deac0ca5b6a1a45e
+4	271	7552958131280123	build.ninja	b12c3dc9e8e45e18
+4	221	7552958134008535	Cache_Simulator.exe	913ce82a8aa3f9b7
+2	1177	7552959984935659	CMakeFiles/Cache_Simulator.dir/Project2Assembly.cpp.obj	deac0ca5b6a1a45e
+1179	1584	7552959989064184	Cache_Simulator.exe	913ce82a8aa3f9b7
+3	1086	7552962176752736	CMakeFiles/Cache_Simulator.dir/Project2Assembly.cpp.obj	deac0ca5b6a1a45e
+1087	1454	7552962180529691	Cache_Simulator.exe	913ce82a8aa3f9b7
+2	694	7552964732537429	CMakeFiles/Cache_Simulator.dir/Project2Assembly.cpp.obj	deac0ca5b6a1a45e
+695	888	7552964734505558	Cache_Simulator.exe	913ce82a8aa3f9b7
+4	825	7552970558490423	CMakeFiles/Cache_Simulator.dir/Project2Assembly.cpp.obj	deac0ca5b6a1a45e
+825	1064	7552970560912286	Cache_Simulator.exe	913ce82a8aa3f9b7
+4	683	7552973236457231	CMakeFiles/Cache_Simulator.dir/Project2Assembly.cpp.obj	deac0ca5b6a1a45e
+683	879	7552973238335546	Cache_Simulator.exe	913ce82a8aa3f9b7

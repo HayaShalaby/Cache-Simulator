@@ -1,119 +1,323 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
-#include <iostream>
-#include <vector>
-#include <fstream>
 #include <string>
 #include <sstream>
 #include <cmath>
+#include <iomanip>
+
 using namespace std;
 
-// User inputs declared as global variables
-
-struct cacheLine {
-    bool VB = false; // Valid bit (false: invalid, true: valid)
-    int tag = -1;    // Tag (initialized to -1 for unused cache line)
+// Cache Line Structure
+struct CacheLine {
+    bool VB = false; // Valid bit
+    int tag = -1; // Cache tag
 };
 
 // Memory Inputs
 int memoryBits; // Memory address bits
-int memAT;      // Memory access time
+int memAT; // Memory access time
 
 // Cache Inputs
-int S;          // Cache size in bytes
-int L;          // Cache line size in bytes
-int cacheAT;    // Cache access time
+int numLevels_data, numLevels_instr; // Number of cache levels for data and instruction
+vector<int> cacheSizes_data, cacheSizes_instr; // Cache sizes for data and instruction
+vector<int> cacheLineSizes_data, cacheLineSizes_instr; // Cache line sizes for data and instruction
+vector<int> cacheATs_data, cacheATs_instr; // Cache access times for data and instruction
 
-// Program Outputs
-float hitRatio;
-float missRatio;
-float AMAT;      // Average Memory Access Time
-float SMAT = 0;  // Sum Memory Access Time
-int hits = 0;
-int misses = 0;
+vector<int> hits_data, hits_instr, misses_data, misses_instr; // Hits and misses per cache level
 
-vector<int> memAdds; // Memory addresses in bytes (number of accesses)
+// Hit ratios, miss ratios, and average memory access time per cache level
+vector<float> hitRatios_data, hitRatios_instr, missRatios_data, missRatios_instr, AMATs_data, AMATs_instr;
 
-// Reads memory addresses (accesses) from a sequence file into a vector
-void readFile(string filePath) {
+vector<int> instructionMemAdds; // Instruction memory addresses
+vector<int> dataMemAdds; // Data memory addresses
+
+// Function to read memory addresses from a file
+void readFile(const string& filePath, vector<int>& memAdds) {
     ifstream inputFile(filePath);
     if (!inputFile) {
         cerr << "Error opening file: " << filePath << endl;
-        return;
+        exit(1);
     }
-
     string line, address;
     while (getline(inputFile, line)) {
         stringstream ss(line);
         while (getline(ss, address, ',')) {
-            memAdds.push_back(stoi(address));
+            memAdds.push_back(stoi(address)); // Store memory accesses
         }
     }
     inputFile.close();
 }
 
-// Cache simulation function
+// Cache Simulation Function
 void cacheSim() {
-    int cacheLines = S / L; // Number of cache lines
-    int index, TAG;
 
-    vector<cacheLine> cache(cacheLines);
+    // Initializing our values for data cache
+    hits_data.assign(numLevels_data, 0);
+    misses_data.assign(numLevels_data, 0);
+    hitRatios_data.assign(numLevels_data, 0);
+    missRatios_data.assign(numLevels_data, 0);
+    AMATs_data.assign(numLevels_data, 0);
 
-    // Output header for trace
-    cout << "Trace: \n";
-    cout << "Access\tAddress\tIndex\tTag\tVB\tCTag\tResult\n";
+    // Initializing our values for instruction cache
+    hits_instr.assign(numLevels_instr, 0);
+    misses_instr.assign(numLevels_instr, 0);
+    hitRatios_instr.assign(numLevels_instr, 0);
+    missRatios_instr.assign(numLevels_instr, 0);
+    AMATs_instr.assign(numLevels_instr, 0);
 
-    // Loop over each memory address (access)
-    for (int i = 0; i < memAdds.size(); i++) {
-        int address = memAdds[i];
-       // cout << address << " " << L << " " << cacheLines
-        index = (address / L) % cacheLines;
-        TAG = (address / L) / cacheLines;
+    // Initialize cache levels for data cache
+    vector<vector<CacheLine> > caches_data(numLevels_data);
+    for (int i = 0; i < numLevels_data; i++) {
+        int numLines_data = cacheSizes_data[i] / cacheLineSizes_data[i];
+        caches_data[i] = vector<CacheLine>(numLines_data);
+    }
 
-       cout << i + 1 << "\t" << address << "\t" << index << "\t" << TAG << "\t"
-            << cache[index].VB << "\t" << cache[index].tag << "\t";
+    // Initialize cache levels for instruction cache
+    vector<vector<CacheLine> > caches_instr(numLevels_instr);
+    for (int i = 0; i < numLevels_instr; i++) {
+        int numLines_instr = cacheSizes_instr[i] / cacheLineSizes_instr[i];
+        caches_instr[i] = vector<CacheLine>(numLines_instr);
+    }
 
-       // cout << address << " " << cache[index].VB << " " << cache[index].tag << " " << TAG <<  " " << index << endl;
+    // Output for tracing data cache
+    cout << "Tracing Data Cache:" << endl;
+    cout << left << setw(8) << "Access"
+        << setw(12) << "Address"
+        << setw(8) << "Index"
+        << setw(8) << "Tag"
+        << setw(6) << "VB"
+        << setw(8) << "CTag"
+        << setw(10) << "Result"
+        << setw(8) << "Level"
+        << setw(12) << "Type" << endl;
 
-        if (cache[index].VB && cache[index].tag == TAG) {
-            // Hit
-            hits++;
-            SMAT += cacheAT;
-            cout << "Hit\n";
-        }
-        else {
-            // Miss
-            misses++;
-            cache[index].VB = true;
-            cache[index].tag = TAG;
-            //cout << "TAG " << TAG << endl;
-            SMAT += memAT;
-            cout << "Miss\n";
+    // Process data cache accesses
+    for (size_t i = 0; i < dataMemAdds.size(); i++) {
+        int address = dataMemAdds[i];
+        bool hit = false;
+
+        for (int level = 0; level < numLevels_data; level++) {
+            int cacheLines = cacheSizes_data[level] / cacheLineSizes_data[level];
+            int index = (address / cacheLineSizes_data[level]) % cacheLines;
+            int tag = (address / cacheLineSizes_data[level]) / cacheLines;
+
+            // Trace the access
+            cout << setw(8) << i + 1
+                << setw(12) << address
+                << setw(8) << index
+                << setw(8) << tag
+                << setw(6) << caches_data[level][index].VB
+                << setw(8) << caches_data[level][index].tag;
+
+            if (caches_data[level][index].VB && caches_data[level][index].tag == tag) {
+                cout << setw(10) << "Hit"
+                    << setw(8) << level + 1
+                    << setw(12) << "Data" << endl;
+                hits_data[level]++;
+                hit = true;
+                cout << "-------------------------------------------------------------------" << endl;
+                cout << "Number of accesses so far: " << i << endl;
+                cout << "Level " << level + 1 << ":" << endl;
+                cout << "Number of hits so far: " << hits_data[level] << endl;
+                cout << "Number of misses so far: " << misses_data[level] << endl;
+                cout << "-------------------------------------------------------------------" << endl;
+                break;
+            }
+            else {
+                cout << setw(10) << "Miss"
+                    << setw(8) << level + 1
+                    << setw(12) << "Data" << endl;
+                misses_data[level]++;
+            }
+
+            // Update cache on miss at current level
+            if (!hit && level == numLevels_data - 1) {
+                caches_data[0][index].VB = true;
+                caches_data[0][index].tag = tag;
+            }
+
+            cout << "-------------------------------------------------------------------" << endl;
+            cout << "Number of accesses so far: " << i << endl;
+            cout << "Level " << level + 1 << ":" << endl;
+            cout << "Number of hits so far: " << hits_data[level] << endl;
+            cout << "Number of misses so far: " << misses_data[level] << endl;
+            cout << "-------------------------------------------------------------------" << endl;
         }
 
     }
 
-    // Calculate final results
-    hitRatio = static_cast<float>(hits) / memAdds.size();
-    missRatio = static_cast<float>(misses) / memAdds.size();
-    AMAT = cacheAT + missRatio * memAT;
+    cout << endl << endl << endl << endl;
 
-    // Display results
-    cout << "\nResults:\n";
-    cout << "Hits: " << hits << "\n";
-    cout << "Misses: " << misses << "\n";
-    cout << "Hit Ratio: " << hitRatio << "\n";
-    cout << "Miss Ratio: " << missRatio << "\n";
-    cout << "Average Memory Access Time (AMAT): " << AMAT << " cycles\n";
+    // Output for tracing instruction cache
+    cout << "\nTracing Instruction Cache:" << endl;
+    cout << left << setw(8) << "Access"
+        << setw(12) << "Address"
+        << setw(8) << "Index"
+        << setw(8) << "Tag"
+        << setw(6) << "VB"
+        << setw(8) << "CTag"
+        << setw(10) << "Result"
+        << setw(8) << "Level"
+        << setw(12) << "Type" << endl;
+
+    // Process instruction cache accesses
+    for (size_t i = 0; i < instructionMemAdds.size(); i++) {
+        int address = instructionMemAdds[i];
+        bool hit = false;
+
+        for (int level = 0; level < numLevels_instr; level++) {
+            int cacheLines = cacheSizes_instr[level] / cacheLineSizes_instr[level];
+            int index = (address / cacheLineSizes_instr[level]) % cacheLines;
+            int tag = (address / cacheLineSizes_instr[level]) / cacheLines;
+
+            // Trace the access
+            cout << setw(8) << i + 1
+                << setw(12) << address
+                << setw(8) << index
+                << setw(8) << tag
+                << setw(6) << caches_instr[level][index].VB
+                << setw(8) << caches_instr[level][index].tag;
+
+            if (caches_instr[level][index].VB && caches_instr[level][index].tag == tag) {
+                cout << setw(10) << "Hit"
+                    << setw(8) << level + 1
+                    << setw(12) << "Instruction" << endl;
+                hits_instr[level]++;
+                hit = true;
+                cout << "-------------------------------------------------------------------" << endl;
+                cout << "Number of accesses so far: " << i << endl;
+                cout << "Level " << level + 1 << ":" << endl;
+                cout << "Number of hits so far: " << hits_instr[level] << endl;
+                cout << "Number of misses so far: " << misses_instr[level] << endl;
+                cout << "-------------------------------------------------------------------" << endl;
+                break;
+            }
+            else {
+                cout << setw(10) << "Miss"
+                    << setw(8) << level + 1
+                    << setw(12) << "Instruction" << endl;
+                misses_instr[level]++;
+            }
+
+            // Update cache on miss at current level
+            if (!hit && level == numLevels_instr - 1) {
+                caches_instr[0][index].VB = true;
+                caches_instr[0][index].tag = tag;
+            }
+            cout << "-------------------------------------------------------------------" << endl;
+            cout << "Number of accesses so far: " << i << endl;
+            cout << "Level " << level + 1 << ":" << endl;
+            cout << "Number of hits so far: " << hits_instr[level] << endl;
+            cout << "Number of misses so far: " << misses_instr[level] << endl;
+            cout << "-------------------------------------------------------------------" << endl;
+        }
+    }
+
+    // Calculations for data and instruction cache AMATs
+    for (int level = 0; level < numLevels_data; level++) {
+        int totalAccesses = dataMemAdds.size();
+        hitRatios_data[level] = static_cast<float>(hits_data[level]) / totalAccesses;
+        missRatios_data[level] = static_cast<float>(misses_data[level]) / totalAccesses;
+        AMATs_data[level] = cacheATs_data[level] + missRatios_data[level] * memAT;
+    }
+
+    for (int level = 0; level < numLevels_instr; level++) {
+        int totalAccesses = instructionMemAdds.size();
+        hitRatios_instr[level] = static_cast<float>(hits_instr[level]) / totalAccesses;
+        missRatios_instr[level] = static_cast<float>(misses_instr[level]) / totalAccesses;
+        AMATs_instr[level] = cacheATs_instr[level] + missRatios_instr[level] * memAT;
+    }
+
+    // Print results
+    cout << "\nData Cache Simulation Results:\n";
+    cout << left << setw(8) << "Level"
+        << setw(10) << "Hits"
+        << setw(10) << "Misses"
+        << setw(12) << "Hit Ratio"
+        << setw(12) << "Miss Ratio"
+        << "AMAT (cycles)" << endl;
+    for (int level = 0; level < numLevels_data; level++) {
+        cout << setw(8) << level + 1
+            << setw(10) << hits_data[level]
+            << setw(10) << misses_data[level]
+            << setw(12) << hitRatios_data[level]
+            << setw(12) << missRatios_data[level]
+            << AMATs_data[level] << endl;
+    }
+
+    cout << "\nInstruction Cache Simulation Results:\n";
+    cout << left << setw(8) << "Level"
+        << setw(10) << "Hits"
+        << setw(10) << "Misses"
+        << setw(12) << "Hit Ratio"
+        << setw(12) << "Miss Ratio"
+        << "AMAT (cycles)" << endl;
+    for (int level = 0; level < numLevels_instr; level++) {
+        cout << setw(8) << level + 1
+            << setw(10) << hits_instr[level]
+            << setw(10) << misses_instr[level]
+            << setw(12) << hitRatios_instr[level]
+            << setw(12) << missRatios_instr[level]
+            << AMATs_instr[level] << endl;
+    }
 }
 
-// Driver Program
+// Main Driver Function
 int main() {
-    cout << "Enter memoryBits, memory access time, cache size in bytes, cache line size in bytes, and cache access time:\n";
-    cin >> memoryBits >> memAT >> S >> L >> cacheAT;
-    readFile("C:/Users/HP/OneDrive/Desktop/Cachesim.txt");
-    cacheSim();
+    // Input for memory and cache parameters
+    cout << "Enter memory address bits (16 to 40): ";
+    cin >> memoryBits;
+    cout << "Enter memory access time (50 to 200 cycles): ";
+    cin >> memAT;
 
+    // Data cache input
+    cout << "Enter number of cache levels: ";
+    cin >> numLevels_data;
+    numLevels_instr = numLevels_data;
+    cacheSizes_data.resize(numLevels_data);
+    cacheLineSizes_data.resize(numLevels_data);
+    cacheATs_data.resize(numLevels_data);
+
+    for (int i = 0; i < numLevels_data; i++) {
+        cout << "Level " << i + 1 << " data cache size (bytes): ";
+        cin >> cacheSizes_data[i];
+        cout << "Level " << i + 1 << " data cache line size (bytes): ";
+        cin >> cacheLineSizes_data[i];
+        cout << "Level " << i + 1 << " data cache access time (cycles): ";
+        cin >> cacheATs_data[i];
+    }
+
+    // Instruction cache input
+//    cout << "Enter number of instruction cache levels: ";
+//    cin >> numLevels_instr;
+    cacheSizes_instr.resize(numLevels_instr);
+    cacheLineSizes_instr.resize(numLevels_instr);
+    cacheATs_instr.resize(numLevels_instr);
+
+    for (int i = 0; i < numLevels_instr; i++) {
+        cout << "Level " << i + 1 << " instruction cache size (bytes): ";
+        cin >> cacheSizes_instr[i];
+        cout << "Level " << i + 1 << " instruction cache line size (bytes): ";
+        cin >> cacheLineSizes_instr[i];
+        cout << "Level " << i + 1 << " instruction cache access time (cycles): ";
+        cin >> cacheATs_instr[i];
+    }
+
+    // Read memory addresses
+    string instructionFile, dataFile;
+    cout << "Instruction memory address file: ";
+    cin >> instructionFile;
+    cout << "Data memory address file: ";
+    cin >> dataFile;
+
+    readFile(instructionFile, instructionMemAdds);
+    readFile(dataFile, dataMemAdds);
+
+    // Run the simulation
+    cacheSim();
     return 0;
 }
+
+// C:/Users/HP/Downloads/instructions.txt
+// C:/Users/HP/Downloads/test_data.txt

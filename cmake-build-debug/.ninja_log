@@ -1,0 +1,16 @@
+# ninja log v5
+1371	1831	7552825136744847	Cache_Simulator.exe	ecd0e0f0f9d70d1b
+4	1225	7552840578869295	CMakeFiles/Cache_Simulator.dir/cacheSim.cpp.obj	4e91a066a03f2f1f
+6	712	7552839571195618	CMakeFiles/Cache_Simulator.dir/fileread_test.cpp.obj	289cff2399b8cb01
+0	239	7552840820943684	build.ninja	b12c3dc9e8e45e18
+2	194	7552840823320406	Cache_Simulator.exe	ecd0e0f0f9d70d1b
+2	684	7552846348508092	CMakeFiles/Cache_Simulator.dir/cacheSim.cpp.obj	4e91a066a03f2f1f
+684	971	7552846351347212	Cache_Simulator.exe	ecd0e0f0f9d70d1b
+6	1294	7552859396055451	CMakeFiles/Cache_Simulator.dir/cacheSim.cpp.obj	4e91a066a03f2f1f
+1295	1635	7552859399453525	Cache_Simulator.exe	ecd0e0f0f9d70d1b
+7	600	7552903603252348	CMakeFiles/Cache_Simulator.dir/cacheSim.cpp.obj	4e91a066a03f2f1f
+601	893	7552903606097600	Cache_Simulator.exe	ecd0e0f0f9d70d1b
+2	1382	7552905911470578	CMakeFiles/Cache_Simulator.dir/cacheSim.cpp.obj	4e91a066a03f2f1f
+1383	1786	7552905915561306	Cache_Simulator.exe	ecd0e0f0f9d70d1b
+3	720	7552909285179705	CMakeFiles/Cache_Simulator.dir/cacheSim.cpp.obj	4e91a066a03f2f1f
+720	886	7552909286894820	Cache_Simulator.exe	ecd0e0f0f9d70d1b

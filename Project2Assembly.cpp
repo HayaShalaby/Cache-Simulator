@@ -271,10 +271,8 @@ void cacheSim() {
         cout << left << setw(8) << "Index"
              << setw(12) << "VB" << setw(8) << "Tag" <<endl;
         for(int j = 0; j < caches_data[i].size(); j++){
-            if(caches_data[i][j].VB || caches_data[i][j].tag != -1) {
-                cout << setw(8) << j
-                     << setw(12) << caches_data[i][j].VB << setw(8) << caches_data[i][j].tag << endl;
-            }
+            cout << setw(8) << j
+                 << setw(12) << caches_data[i][j].VB  << setw(8) << caches_data[i][j].tag <<endl;
         }
     }
 
@@ -285,10 +283,8 @@ void cacheSim() {
         cout << left << setw(8) << "Index"
              << setw(12) << "VB" << setw(8) << "Tag" <<endl;
         for(int j = 0; j < caches_instr[i].size(); j++){
-            if(caches_instr[i][j].VB || caches_instr[i][j].tag != -1) {
-                cout << setw(8) << j
-                     << setw(12) << caches_instr[i][j].VB << setw(8) << caches_instr[i][j].tag << endl;
-            }
+            cout << setw(8) << j
+                 << setw(12) << caches_instr[i][j].VB  << setw(8) << caches_instr[i][j].tag <<endl;
         }
     }
 }
@@ -298,8 +294,17 @@ int main() {
     // Input for memory and cache parameters
     cout << "Enter memory address bits (16 to 40): ";
     cin >> memoryBits;
+    while(memoryBits < 16 || memoryBits > 40){
+        cout << "Invalid input. Please try again within the correct range (16 to 40):" << endl;
+        cin >>memoryBits;
+    }
+
     cout << "Enter memory access time (50 to 200 cycles): ";
     cin >> memAT;
+    while(memAT < 50 || memAT > 200){
+        cout << "Invalid input. Please try again within the correct range (50 to 200 cycles):" << endl;
+        cin >>memoryBits;
+    }
 
     // Data cache input
     cout << "Enter number of cache levels: ";
@@ -316,6 +321,10 @@ int main() {
         cin >> cacheLineSizes_data[i];
         cout << "Level " << i + 1 << " data cache access time (1 to 10 cycles): ";
         cin >> cacheATs_data[i];
+        while(cacheATs_data[i] < 1 || cacheATs_data[i] > 10){
+            cout << "Invalid input. Please try again within the correct range (1 to 10 cycles):" << endl;
+            cin >> cacheATs_data[i];
+        }
     }
 
     // Instruction cache input
@@ -343,6 +352,8 @@ int main() {
 
     readFile(instructionFile, instructionMemAdds);
     readFile(dataFile, dataMemAdds);
+
+    cout << endl << endl << endl;
 
     // Run the simulation
     cacheSim();

@@ -1,0 +1,3 @@
+C:/Users/Haya/Desktop/Cache-Simulator/cmake-build-debug/CMakeFiles/Cache_Simulator.dir
+C:/Users/Haya/Desktop/Cache-Simulator/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/Haya/Desktop/Cache-Simulator/cmake-build-debug/CMakeFiles/rebuild_cache.dir

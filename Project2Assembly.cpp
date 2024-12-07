@@ -49,6 +49,7 @@ void readFile(const string& filePath, vector<int>& memAdds) {
     inputFile.close();
 }
 
+
 // Cache Simulation Function
 void cacheSim() {
 
@@ -261,6 +262,35 @@ void cacheSim() {
             << setw(12) << missRatios_instr[level]
             << AMATs_instr[level] << endl;
     }
+
+    cout << endl << endl << endl << endl;
+
+    // Display final tags and VBs of all modified entries
+    for(int i = 0; i < numLevels_data; i++){
+        cout << "Data Cache Level " << i + 1 << ":" <<endl;
+        cout << left << setw(8) << "Index"
+             << setw(12) << "VB" << setw(8) << "Tag" <<endl;
+        for(int j = 0; j < caches_data[i].size(); j++){
+            if(caches_data[i][j].VB || caches_data[i][j].tag != -1) {
+                cout << setw(8) << j
+                     << setw(12) << caches_data[i][j].VB << setw(8) << caches_data[i][j].tag << endl;
+            }
+        }
+    }
+
+    cout << endl;
+
+    for(int i = 0; i < numLevels_instr; i++){
+        cout << "Instruction Cache Level " << i + 1 << ":" <<endl;
+        cout << left << setw(8) << "Index"
+             << setw(12) << "VB" << setw(8) << "Tag" <<endl;
+        for(int j = 0; j < caches_instr[i].size(); j++){
+            if(caches_instr[i][j].VB || caches_instr[i][j].tag != -1) {
+                cout << setw(8) << j
+                     << setw(12) << caches_instr[i][j].VB << setw(8) << caches_instr[i][j].tag << endl;
+            }
+        }
+    }
 }
 
 // Main Driver Function
@@ -284,7 +314,7 @@ int main() {
         cin >> cacheSizes_data[i];
         cout << "Level " << i + 1 << " data cache line size (bytes): ";
         cin >> cacheLineSizes_data[i];
-        cout << "Level " << i + 1 << " data cache access time (cycles): ";
+        cout << "Level " << i + 1 << " data cache access time (1 to 10 cycles): ";
         cin >> cacheATs_data[i];
     }
 
@@ -300,7 +330,7 @@ int main() {
         cin >> cacheSizes_instr[i];
         cout << "Level " << i + 1 << " instruction cache line size (bytes): ";
         cin >> cacheLineSizes_instr[i];
-        cout << "Level " << i + 1 << " instruction cache access time (cycles): ";
+        cout << "Level " << i + 1 << " instruction cache access time (1 to 10 cycles): ";
         cin >> cacheATs_instr[i];
     }
 
@@ -316,6 +346,7 @@ int main() {
 
     // Run the simulation
     cacheSim();
+
     return 0;
 }
 

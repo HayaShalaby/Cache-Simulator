@@ -303,7 +303,7 @@ int main() {
     cin >> memAT;
     while(memAT < 50 || memAT > 200){
         cout << "Invalid input. Please try again within the correct range (50 to 200 cycles):" << endl;
-        cin >>memoryBits;
+        cin >>memAT;
     }
 
     // Data cache input
